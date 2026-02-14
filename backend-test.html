@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First Groups Accounting - Backend Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .test-section {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .test-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 16px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status.pending { background: #ecc94b; }
+        .status.success { background: #48bb78; }
+        .status.error { background: #f56565; }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .result {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success-msg { color: #38a169; }
+        .error-msg { color: #e53e3e; }
+        .info { 
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .info-title {
+            font-weight: 600;
+            color: #2c5282;
+            margin-bottom: 8px;
+        }
+        .info-text {
+            color: #2d3748;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        pre {
+            background: #1a202c;
+            color: #68d391;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Backend Connection Test</h1>
+        <p class="subtitle">First Groups Accounting API Testing Tool</p>
+
+        <div class="info">
+            <div class="info-title">📋 Setup Checklist</div>
+            <div class="info-text">
+                ✅ XAMPP/WAMP installed and running<br>
+                ✅ MySQL service started<br>
+                ✅ Database imported (database.sql)<br>
+                ✅ config.php configured with correct credentials<br>
+                ✅ Backend files in htdocs folder
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">
+                <span class="status pending" id="status-connection"></span>
+                Test 1: Database Connection
+            </div>
+            <button onclick="testConnection()">Test Connection</button>
+            <div id="result-connection" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">
+                <span class="status pending" id="status-user"></span>
+                Test 2: Get User Profile
+            </div>
+            <button onclick="testUser()">Get User Profile</button>
+            <div id="result-user" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">
+                <span class="status pending" id="status-accounts"></span>
+                Test 3: Get Accounts
+            </div>
+            <button onclick="testAccounts()">Get Accounts</button>
+            <div id="result-accounts" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">
+                <span class="status pending" id="status-update"></span>
+                Test 4: Update Balance
+            </div>
+            <button onclick="testUpdate()">Add ₦1000 to Main Account</button>
+            <div id="result-update" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="info">
+            <div class="info-title">🔗 API Base URL</div>
+            <div class="info-text">
+                Current: <strong id="api-url"></strong>
+                <pre>// Update in src/services/api.ts
+const API_BASE_URL = 'http://localhost/first-groups-accounting/php-backend/api';</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost/first-groups-accounting/php-backend/api';
+        document.getElementById('api-url').textContent = API_BASE_URL;
+
+        async function apiCall(endpoint, options = {}) {
+            const url = `${API_BASE_URL}/${endpoint}`;
+            try {
+                const response = await fetch(url, {
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                return await response.json();
+            } catch (error) {
+                throw new Error(`Network error: ${error.message}`);
+            }
+        }
+
+        function updateStatus(testName, status) {
+            const statusEl = document.getElementById(`status-${testName}`);
+            statusEl.className = `status ${status}`;
+        }
+
+        function showResult(testName, data, isError = false) {
+            const resultEl = document.getElementById(`result-${testName}`);
+            resultEl.style.display = 'block';
+            resultEl.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            if (isError) {
+                resultEl.style.borderColor = '#f56565';
+            } else {
+                resultEl.style.borderColor = '#48bb78';
+            }
+        }
+
+        async function testConnection() {
+            updateStatus('connection', 'pending');
+            try {
+                const response = await apiCall('test.php');
+                updateStatus('connection', 'success');
+                showResult('connection', response);
+            } catch (error) {
+                updateStatus('connection', 'error');
+                showResult('connection', { error: error.message }, true);
+            }
+        }
+
+        async function testUser() {
+            updateStatus('user', 'pending');
+            try {
+                const response = await apiCall('user.php');
+                if (response.success) {
+                    updateStatus('user', 'success');
+                    showResult('user', response);
+                } else {
+                    updateStatus('user', 'error');
+                    showResult('user', response, true);
+                }
+            } catch (error) {
+                updateStatus('user', 'error');
+                showResult('user', { error: error.message }, true);
+            }
+        }
+
+        async function testAccounts() {
+            updateStatus('accounts', 'pending');
+            try {
+                const response = await apiCall('accounts.php');
+                if (response.success) {
+                    updateStatus('accounts', 'success');
+                    showResult('accounts', response);
+                } else {
+                    updateStatus('accounts', 'error');
+                    showResult('accounts', response, true);
+                }
+            } catch (error) {
+                updateStatus('accounts', 'error');
+                showResult('accounts', { error: error.message }, true);
+            }
+        }
+
+        async function testUpdate() {
+            updateStatus('update', 'pending');
+            try {
+                const response = await apiCall('accounts.php', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        account_type: 'main',
+                        amount: 1000,
+                        operation: 'add',
+                        category: 'Test',
+                        description: 'Backend test deposit'
+                    })
+                });
+                if (response.success) {
+                    updateStatus('update', 'success');
+                    showResult('update', response);
+                } else {
+                    updateStatus('update', 'error');
+                    showResult('update', response, true);
+                }
+            } catch (error) {
+                updateStatus('update', 'error');
+                showResult('update', { error: error.message }, true);
+            }
+        }
+
+        // Auto-test connection on page load
+        window.addEventListener('load', () => {
+            setTimeout(testConnection, 500);
+        });
+    </script>
+</body>
+</html>
